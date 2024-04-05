@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,7 +16,9 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject BobberCamera;
     [SerializeField] GameObject reelSign;
     [SerializeField] bool enableextracam;
-    public List<string> Caughtfish = new List<string>();
+    public string[] Caughtfish;
+    public string[] Fish;
+    public string progressfish = null;
     public float chargetime;
     bool reel;
     bool charging;
@@ -23,13 +26,18 @@ public class Player : MonoBehaviour
     float allowedtime = 0;
     float reelsigntimer;
     float reeltimer;
+    float fishstrength;
     System.Random rng;
     // Start is called before the first frame update
     void Start()
     {
         rng = new System.Random();
-        while (Caughtfish.Count > 0) { Caughtfish.RemoveAt(0); }
         bobberstart.transform.position = bobber.transform.position;
+        progressfish = null;
+        for (int i = 0; i < Caughtfish.Length; i++)
+        {
+            Caughtfish[i] = null;
+        }
     }
     private void Update()
     {
@@ -37,6 +45,21 @@ public class Player : MonoBehaviour
         {
             reeltimer += Time.deltaTime;
             if (reeltimer >= 2) { Fishing(); reeltimer = 0; }
+        }
+        else if (progressfish != null) 
+        {
+            Debug.Log("Fish acquired");
+            for (int i = 0; i < Caughtfish.Length; i++)
+            {
+                Debug.Log("Checking");
+                if (Caughtfish[i] == null)
+                {
+                    Debug.Log("Caught");
+                    Caughtfish[i] = progressfish;
+                    break;
+                }
+            }
+            progressfish = null;
         }
         if (reel && bobber.GetComponent<Bobber>().inwater)
         {
@@ -54,7 +77,7 @@ public class Player : MonoBehaviour
             Vector3 dir = targetPos - (Vector2)bobber.transform.position;
             bobber.transform.up = dir;
             bobber.GetComponent<Rigidbody2D>().gravityScale = 0;
-            if (bobber.GetComponent<Bobber>().inwater) bobber.GetComponent<Rigidbody2D>().AddForce(-bobber.transform.up * 0.375f);
+            if (bobber.GetComponent<Bobber>().inwater) bobber.GetComponent<Rigidbody2D>().AddForce(-bobber.transform.up * 0.375f * (fishstrength/2));
         }
         else if (reel && !bobber.GetComponent<Bobber>().inwater)
         {
@@ -151,6 +174,9 @@ public class Player : MonoBehaviour
         int temp = rng.Next(0, 1000000);
         if (temp > 10 && !reel)
         {
+            int fish = rng.Next(0, Fish.Length);
+            fishstrength = fish + 1;
+            progressfish = Fish[fish];
             reel = true;
             reelSign.SetActive(true);
         }
