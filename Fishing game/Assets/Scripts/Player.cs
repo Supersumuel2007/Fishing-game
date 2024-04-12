@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -15,18 +14,21 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject MainCamera;
     [SerializeField] GameObject BobberCamera;
     [SerializeField] GameObject reelSign;
+    [SerializeField] GameObject inventorypanel;
+    [SerializeField] GameObject[] inventoryslots;
+    [SerializeField] GameObject[] fishicons;
     [SerializeField] bool enableextracam;
     public string[] Caughtfish;
     public string[] Fish;
     public string progressfish = null;
     public float chargetime;
-    bool reel;
-    bool charging;
-    bool hascast;
     float allowedtime = 0;
     float reelsigntimer;
     float reeltimer;
     float fishstrength;
+    bool reel;
+    bool charging;
+    bool hascast;
     System.Random rng;
     // Start is called before the first frame update
     void Start()
@@ -41,6 +43,12 @@ public class Player : MonoBehaviour
     }
     private void Update()
     {
+        for (int i = 0; i < Caughtfish.Length; i++)
+        {
+            if (Caughtfish[i] == Fish[0]) Caughtfish[i] = Fish[0];
+            else if (Caughtfish[i] == Fish[1]) Caughtfish[i] = Fish[1];
+            else if (Caughtfish[i] == Fish[2]) Caughtfish[i] = Fish[2];
+        }
         if (bobber.GetComponent<Bobber>().inwater)
         {
             reeltimer += Time.deltaTime;
@@ -48,13 +56,10 @@ public class Player : MonoBehaviour
         }
         else if (progressfish != null) 
         {
-            Debug.Log("Fish acquired");
             for (int i = 0; i < Caughtfish.Length; i++)
             {
-                Debug.Log("Checking");
                 if (Caughtfish[i] == null)
                 {
-                    Debug.Log("Caught");
                     Caughtfish[i] = progressfish;
                     break;
                 }
@@ -180,5 +185,11 @@ public class Player : MonoBehaviour
             reel = true;
             reelSign.SetActive(true);
         }
+    }
+    public  void Inventory()
+    {
+        Debug.Log("Inventory");
+        if (!inventorypanel.activeInHierarchy) inventorypanel.SetActive(true);
+        else inventorypanel.SetActive(false);
     }
 }
