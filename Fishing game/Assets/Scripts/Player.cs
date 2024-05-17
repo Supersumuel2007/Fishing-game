@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -17,12 +18,9 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject fishingrod;
     [SerializeField] GameObject bobber;
     [SerializeField] GameObject bobberstart;
-    [SerializeField] GameObject maincamera;
-    [SerializeField] GameObject bobbercamera;
     [SerializeField] GameObject reelSign;
     [SerializeField] GameObject inventorypanel;
     [SerializeField] GameObject caughtpanel;
-    [SerializeField] bool enableextracam;
     public string[] caughtfish;
     public string[] Fish;
     public string progressfish = null;
@@ -48,6 +46,10 @@ public class Player : MonoBehaviour
     }
     private void Update()
     {
+        if (hascast && bobber.transform.position == bobberstart.transform.position)
+        {
+            hascast = false;
+        }
         if (bobber.GetComponent<Bobber>().inwater)
         {
             reeltimer += Time.deltaTime;
@@ -92,11 +94,6 @@ public class Player : MonoBehaviour
         {
             bobber.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
             bobber.GetComponent<Rigidbody2D>().gravityScale = 0;
-            if (enableextracam)
-            {
-                maincamera.SetActive(true);
-                bobbercamera.SetActive(false);
-            }
             bobber.transform.position = bobberstart.transform.position;
             reelSign.SetActive(false);
             reel = false;
@@ -108,11 +105,6 @@ public class Player : MonoBehaviour
             if (hascast) 
             {
                 bobber.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
-                if (enableextracam)
-                {
-                    maincamera.SetActive(true);
-                    bobbercamera.SetActive(false);
-                }
             }
             bobber.GetComponent<Rigidbody2D>().gravityScale = 0;
             hascast = false;
@@ -146,10 +138,6 @@ public class Player : MonoBehaviour
     public void ChargeandReel(InputAction.CallbackContext context)
     {
         if (caughtpanel.activeInHierarchy) caughtpanel.SetActive(false);
-        for (int i = 0; i < caughtfishicons.Length; i++)
-        {
-            caughtfishicons[i].SetActive(false);
-        }
         int temp = 0;
         for (int i = 0; i < caughtfish.Length; i++)
         {
@@ -184,11 +172,6 @@ public class Player : MonoBehaviour
         bobber.transform.up = dir;
         bobber.GetComponent<Rigidbody2D>().AddForce(bobber.transform.up * (chargetime * 20));
         bobber.GetComponent<Rigidbody2D>().gravityScale = 1;
-        if (enableextracam)
-        {
-            maincamera.SetActive(false);
-            bobbercamera.SetActive(true);
-        }
         hascast = true;
     }
     private void Fishing()
