@@ -1,24 +1,29 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 public class Player : MonoBehaviour
 {
+    [SerializeField] TextMeshProUGUI caughttext;
+    [SerializeField] GameObject[] caughtfishicons;
+    [SerializeField] GameObject[] inventoryslots;
+    [SerializeField] GameObject[] fishicons;
     [SerializeField] GameObject fishingrod;
     [SerializeField] GameObject bobber;
     [SerializeField] GameObject bobberstart;
-    [SerializeField] GameObject MainCamera;
-    [SerializeField] GameObject BobberCamera;
+    [SerializeField] GameObject maincamera;
+    [SerializeField] GameObject bobbercamera;
     [SerializeField] GameObject reelSign;
     [SerializeField] GameObject inventorypanel;
-    [SerializeField] GameObject[] inventoryslots;
-    [SerializeField] GameObject[] fishicons;
+    [SerializeField] GameObject caughtpanel;
     [SerializeField] bool enableextracam;
-    public string[] Caughtfish;
+    public string[] caughtfish;
     public string[] Fish;
     public string progressfish = null;
     public float chargetime;
@@ -36,19 +41,13 @@ public class Player : MonoBehaviour
         rng = new System.Random();
         bobberstart.transform.position = bobber.transform.position;
         progressfish = null;
-        for (int i = 0; i < Caughtfish.Length; i++)
+        for (int i = 0; i < caughtfish.Length; i++)
         {
-            Caughtfish[i] = null;
+            caughtfish[i] = null;
         }
     }
     private void Update()
     {
-        for (int i = 0; i < Caughtfish.Length; i++)
-        {
-            if (Caughtfish[i] == Fish[0]) Caughtfish[i] = Fish[0];
-            else if (Caughtfish[i] == Fish[1]) Caughtfish[i] = Fish[1];
-            else if (Caughtfish[i] == Fish[2]) Caughtfish[i] = Fish[2];
-        }
         if (bobber.GetComponent<Bobber>().inwater)
         {
             reeltimer += Time.deltaTime;
@@ -56,11 +55,16 @@ public class Player : MonoBehaviour
         }
         else if (progressfish != null) 
         {
-            for (int i = 0; i < Caughtfish.Length; i++)
+            for (int i = 0; i < caughtfish.Length; i++)
             {
-                if (Caughtfish[i] == null)
+                if (caughtfish[i] == null)
                 {
-                    Caughtfish[i] = progressfish;
+                    caughtfish[i] = progressfish;
+                    caughttext.text = progressfish;
+                    caughtpanel.SetActive(true);
+                    if (progressfish == Fish[0]) { caughtfishicons[0].SetActive(true); }
+                    else if (progressfish == Fish[1]) { caughtfishicons[1].SetActive(true); }
+                    else if (progressfish == Fish[2]) { caughtfishicons[2].SetActive(true); }
                     break;
                 }
             }
@@ -90,8 +94,8 @@ public class Player : MonoBehaviour
             bobber.GetComponent<Rigidbody2D>().gravityScale = 0;
             if (enableextracam)
             {
-                MainCamera.SetActive(true);
-                BobberCamera.SetActive(false);
+                maincamera.SetActive(true);
+                bobbercamera.SetActive(false);
             }
             bobber.transform.position = bobberstart.transform.position;
             reelSign.SetActive(false);
@@ -106,8 +110,8 @@ public class Player : MonoBehaviour
                 bobber.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
                 if (enableextracam)
                 {
-                    MainCamera.SetActive(true);
-                    BobberCamera.SetActive(false);
+                    maincamera.SetActive(true);
+                    bobbercamera.SetActive(false);
                 }
             }
             bobber.GetComponent<Rigidbody2D>().gravityScale = 0;
@@ -141,22 +145,35 @@ public class Player : MonoBehaviour
     }
     public void ChargeandReel(InputAction.CallbackContext context)
     {
-        if (reel)
+        if (caughtpanel.activeInHierarchy) caughtpanel.SetActive(false);
+        for (int i = 0; i < caughtfishicons.Length; i++)
         {
-            Vector2 targetPos = transform.position;
-            Vector3 dir = targetPos - (Vector2)bobber.transform.position;
-            bobber.transform.up = dir;
-            bobber.GetComponent<Rigidbody2D>().AddForce(bobber.transform.up * 28);
+            caughtfishicons[i].SetActive(false);
         }
-        else
+        int temp = 0;
+        for (int i = 0; i < caughtfish.Length; i++)
         {
-            if (context.performed)
+            if (caughtfish[i] == null) temp++;
+        }
+        if (temp >= caughtfish.Length)
+        {
+            if (reel)
             {
-                charging = true;
+                Vector2 targetPos = transform.position;
+                Vector3 dir = targetPos - (Vector2)bobber.transform.position;
+                bobber.transform.up = dir;
+                bobber.GetComponent<Rigidbody2D>().AddForce(bobber.transform.up * 28);
             }
             else
             {
-                charging = false;
+                if (context.performed)
+                {
+                    charging = true;
+                }
+                else
+                {
+                    charging = false;
+                }
             }
         }
     }
@@ -169,15 +186,14 @@ public class Player : MonoBehaviour
         bobber.GetComponent<Rigidbody2D>().gravityScale = 1;
         if (enableextracam)
         {
-            MainCamera.SetActive(false);
-            BobberCamera.SetActive(true);
+            maincamera.SetActive(false);
+            bobbercamera.SetActive(true);
         }
         hascast = true;
     }
     private void Fishing()
     {
-        int temp = rng.Next(0, 1000000);
-        if (temp > 10 && !reel)
+        if (rng.Next(0, 10000) > 1 && !reel)
         {
             int fish = rng.Next(0, Fish.Length);
             fishstrength = fish + 1;
@@ -188,8 +204,51 @@ public class Player : MonoBehaviour
     }
     public  void Inventory()
     {
-        Debug.Log("Inventory");
-        if (!inventorypanel.activeInHierarchy) inventorypanel.SetActive(true);
-        else inventorypanel.SetActive(false);
+        if (!inventorypanel.activeInHierarchy)
+        {
+            inventorypanel.SetActive(true);
+            for (int i = 0; i < caughtfish.Length; i++)
+            {
+                if ( i % 2 == 1)
+                {
+                    if (caughtfish[i] == Fish[0])
+                    {
+                        Instantiate(fishicons[0], new Vector2(inventoryslots[i].transform.position.x + (192 / 2), inventoryslots[i].transform.position.y + (192 / 2)), Quaternion.identity, inventoryslots[i].transform);
+                    }
+                    else if (caughtfish[i] == Fish[1])
+                    {
+                        Instantiate(fishicons[1], new Vector2(inventoryslots[i].transform.position.x + (192 / 2), inventoryslots[i].transform.position.y + (192 / 2)), Quaternion.identity, inventoryslots[i].transform);
+                    }
+                    else if (caughtfish[i] == Fish[2])
+                    {
+                        Instantiate(fishicons[2], new Vector2(inventoryslots[i].transform.position.x + (192 / 2), inventoryslots[i].transform.position.y + (192 / 2)), Quaternion.identity, inventoryslots[i].transform);
+                    }
+                }
+                else
+                {
+                    if (caughtfish[i] == Fish[0])
+                    {
+                        Instantiate(fishicons[0], new Vector2(inventoryslots[i].transform.position.x + (192 / 2), inventoryslots[i].transform.position.y - (192 / 2)), Quaternion.identity, inventoryslots[i].transform);
+                    }
+                    else if (caughtfish[i] == Fish[1])
+                    {
+                        Instantiate(fishicons[1], new Vector2(inventoryslots[i].transform.position.x + (192 / 2), inventoryslots[i].transform.position.y - (192 / 2)), Quaternion.identity, inventoryslots[i].transform);
+                    }
+                    else if (caughtfish[i] == Fish[2])
+                    {
+                        Instantiate(fishicons[2], new Vector2(inventoryslots[i].transform.position.x + (192 / 2), inventoryslots[i].transform.position.y - (192 / 2)), Quaternion.identity, inventoryslots[i].transform);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < inventoryslots.Length; i++)
+            {
+                try { Destroy(inventoryslots[i].transform.GetChild(0).gameObject); }
+                catch { }
+            }
+            inventorypanel.SetActive(false);
+        }
     }
 }

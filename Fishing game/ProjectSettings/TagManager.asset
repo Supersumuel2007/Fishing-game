@@ -7,6 +7,7 @@ TagManager:
   - Wall
   - Water
   - Bobber Camera
+  - Deep Water
   layers:
   - Default
   - TransparentFX
