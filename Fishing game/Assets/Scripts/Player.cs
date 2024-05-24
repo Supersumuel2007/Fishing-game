@@ -13,6 +13,10 @@ using UnityEngine.UIElements;
 public class Player : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI caughttext;
+    [SerializeField] TextMeshProUGUI timetext;
+    [SerializeField] TextMeshProUGUI daytext;
+    [SerializeField] TextMeshProUGUI qoutatext;
+    [SerializeField] TextMeshProUGUI moneytext;
     [SerializeField] GameObject[] caughtfishicons;
     [SerializeField] GameObject[] inventoryslots;
     [SerializeField] GameObject[] fishicons;
@@ -24,6 +28,7 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject inventorypanel;
     [SerializeField] GameObject caughtpanel;
     [SerializeField] GameObject settingspanel;
+    [SerializeField] GameObject shoppanel;
     [SerializeField] GameObject maincamera;
     [SerializeField] GameObject secondarycamera;
     public string[] caughtfish;
@@ -34,6 +39,11 @@ public class Player : MonoBehaviour
     float reelsigntimer;
     float reeltimer;
     float fishstrength;
+    float days = 1;
+    float hours = 0;
+    float minutes = 0;
+    float money = 0;
+    float qouta;
     public bool enableextracam;
     bool reel;
     bool charging;
@@ -53,6 +63,7 @@ public class Player : MonoBehaviour
         {
             caughtfish[i] = null;
         }
+        qouta = 57.12f;
     }
     private void Update()
     {
@@ -128,6 +139,7 @@ public class Player : MonoBehaviour
             bobber.GetComponent<Rigidbody2D>().gravityScale = 0;
             bobber.transform.position = bobberstart.transform.position;
             reelSign.SetActive(false);
+            reelSign2.SetActive(false);
             reel = false;
         }
         if (chargetime >= 3) { chargetime = 3; reel = false; }
@@ -166,6 +178,40 @@ public class Player : MonoBehaviour
                 allowedtime = 0;
             }
         }
+        moneytext.text = "Money: " + money;
+        qoutatext.text = "Qouta: " + qouta;
+    }
+    private void FixedUpdate()
+    {
+        minutes += Time.deltaTime;
+        if (hours >= 24)
+        {
+            if (money > qouta)
+            {
+                Exit();
+            }
+            days++;
+            qouta *= days / 2;
+            hours = 0;
+        }
+        if (minutes >= 60)
+        {
+            hours++;
+            minutes = 0;
+        }
+        if (hours > 0)
+        {
+            if (minutes < 10 && hours < 10) { timetext.text = "Time: 0" + (int)hours + ":0" + (int)minutes; }
+            else if (hours < 10) { timetext.text = "Time: 0" + (int)hours + ":" + (int)minutes; }
+            else if (minutes < 10) { timetext.text = "Time: " + (int)hours + ":0" + (int)minutes; }
+            else { timetext.text = "Time: " + (int)hours + ":" + (int)minutes; }
+        }
+        else
+        {
+            if (minutes < 10) { timetext.text = "Time: 00:0" + (int)minutes; }
+            else { timetext.text = "Time: 00:" + (int)minutes; }
+        }
+        daytext.text = "Day: " + days;
     }
     public void ChargeandReel(InputAction.CallbackContext context)
     {
@@ -293,6 +339,49 @@ public class Player : MonoBehaviour
     public void extracameratoggle()
     {
         enableextracam = !enableextracam;
+    }
+    #endregion
+    #region shop
+    public void Shop()
+    {
+        if (shoppanel.activeInHierarchy) shoppanel.SetActive(false);
+        else shoppanel.SetActive(true);
+    }
+    public void Sellfish0()
+    {
+        for (int i = 0; i < caughtfish.Length; i++)
+        {
+            if (caughtfish[i] == Fish[0])
+            {
+                caughtfish[i] = "";
+                money += 6;
+                i = caughtfish.Length;
+            }
+        }
+    }
+    public void Sellfish1()
+    {
+        for (int i = 0; i < caughtfish.Length; i++)
+        {
+            if (caughtfish[i] == Fish[1])
+            {
+                caughtfish[i] = "";
+                money += 7.5f;
+                i = caughtfish.Length;
+            }
+        }
+    }
+    public void Sellfish2()
+    {
+        for (int i = 0; i < caughtfish.Length; i++)
+        {
+            if (caughtfish[i] == Fish[2])
+            {
+                caughtfish[i] = "";
+                money += 9;
+                i = caughtfish.Length;
+            }
+        }
     }
     #endregion
 }
