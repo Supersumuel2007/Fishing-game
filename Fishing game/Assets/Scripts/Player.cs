@@ -7,6 +7,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 public class Player : MonoBehaviour
@@ -19,8 +20,12 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject bobber;
     [SerializeField] GameObject bobberstart;
     [SerializeField] GameObject reelSign;
+    [SerializeField] GameObject reelSign2;
     [SerializeField] GameObject inventorypanel;
     [SerializeField] GameObject caughtpanel;
+    [SerializeField] GameObject settingspanel;
+    [SerializeField] GameObject maincamera;
+    [SerializeField] GameObject secondarycamera;
     public string[] caughtfish;
     public string[] Fish;
     public string progressfish = null;
@@ -29,6 +34,7 @@ public class Player : MonoBehaviour
     float reelsigntimer;
     float reeltimer;
     float fishstrength;
+    public bool enableextracam;
     bool reel;
     bool charging;
     bool hascast;
@@ -36,6 +42,10 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        for (int i = 0; i < caughtfishicons.Length; i++)
+        {
+            caughtfishicons[i].SetActive(false);
+        }
         rng = new System.Random();
         bobberstart.transform.position = bobber.transform.position;
         progressfish = null;
@@ -61,28 +71,50 @@ public class Player : MonoBehaviour
             {
                 if (caughtfish[i] == null)
                 {
+                    if (enableextracam)
+                    {
+                        maincamera.SetActive(true);
+                        secondarycamera.SetActive(false);
+                    }
                     caughtfish[i] = progressfish;
                     caughttext.text = progressfish;
                     caughtpanel.SetActive(true);
                     if (progressfish == Fish[0]) { caughtfishicons[0].SetActive(true); }
                     else if (progressfish == Fish[1]) { caughtfishicons[1].SetActive(true); }
                     else if (progressfish == Fish[2]) { caughtfishicons[2].SetActive(true); }
-                    break;
+                    i = caughtfish.Length;
+                    reelsigntimer = 0;
                 }
             }
             progressfish = null;
         }
         if (reel && bobber.GetComponent<Bobber>().inwater)
         {
-            if (reelSign.activeInHierarchy) 
+            if (enableextracam)
             {
-                reelsigntimer += Time.deltaTime;
-                if (reelsigntimer >= 2) { reelSign.SetActive(false); reelsigntimer = 0; }
+                if (reelSign2.activeInHierarchy)
+                {
+                    reelsigntimer += Time.deltaTime;
+                    if (reelsigntimer >= 2) { reelSign2.SetActive(false); reelsigntimer = 0; }
+                }
+                else
+                {
+                    reelsigntimer += Time.deltaTime;
+                    if (reelsigntimer >= 1) { reelSign2.SetActive(true); reelsigntimer = 0; }
+                }
             }
-            else 
+            else
             {
-                reelsigntimer += Time.deltaTime;
-                if (reelsigntimer >= 1) { reelSign.SetActive(true); reelsigntimer = 0; }
+                if (reelSign.activeInHierarchy)
+                {
+                    reelsigntimer += Time.deltaTime;
+                    if (reelsigntimer >= 2) { reelSign.SetActive(false); reelsigntimer = 0; }
+                }
+                else
+                {
+                    reelsigntimer += Time.deltaTime;
+                    if (reelsigntimer >= 1) { reelSign.SetActive(true); reelsigntimer = 0; }
+                }
             }
             Vector2 targetPos = transform.position;
             Vector3 dir = targetPos - (Vector2)bobber.transform.position;
@@ -137,13 +169,21 @@ public class Player : MonoBehaviour
     }
     public void ChargeandReel(InputAction.CallbackContext context)
     {
-        if (caughtpanel.activeInHierarchy) caughtpanel.SetActive(false);
+
+        if (caughtpanel.activeInHierarchy) 
+        {
+            for (int i = 0; i < caughtfishicons.Length; i++)
+            {
+                caughtfishicons[i].SetActive(false);
+            }
+            caughtpanel.SetActive(false); 
+        }
         int temp = 0;
         for (int i = 0; i < caughtfish.Length; i++)
         {
             if (caughtfish[i] == null) temp++;
         }
-        if (temp >= caughtfish.Length)
+        if (temp <= caughtfish.Length)
         {
             if (reel)
             {
@@ -154,19 +194,17 @@ public class Player : MonoBehaviour
             }
             else
             {
-                if (context.performed)
-                {
-                    charging = true;
-                }
-                else
-                {
-                    charging = false;
-                }
+                charging = context.performed;
             }
         }
     }
     private void Cast()
     {
+        if (enableextracam)
+        {
+            maincamera.SetActive(false);
+            secondarycamera.SetActive(true);
+        }
         Vector2 targetPos = -transform.position;
         Vector3 dir = targetPos - (Vector2)bobber.transform.position;
         bobber.transform.up = dir;
@@ -182,7 +220,8 @@ public class Player : MonoBehaviour
             fishstrength = fish + 1;
             progressfish = Fish[fish];
             reel = true;
-            reelSign.SetActive(true);
+            if (enableextracam) reelSign2.SetActive(true);
+            else reelSign.SetActive(true);
         }
     }
     public  void Inventory()
@@ -234,4 +273,26 @@ public class Player : MonoBehaviour
             inventorypanel.SetActive(false);
         }
     }
+    #region settingsmenu
+    public void Settings()
+    {
+        if (settingspanel.activeInHierarchy) settingspanel.SetActive(false);
+        else settingspanel.SetActive(true);
+    }
+    public void Resetdata()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+    public void Exit()
+    {
+        Application.Quit();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
+    }
+    public void extracameratoggle()
+    {
+        enableextracam = !enableextracam;
+    }
+    #endregion
 }

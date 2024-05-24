@@ -15,10 +15,12 @@ public class Bobber : MonoBehaviour
     }
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (collision.CompareTag("Water") || collision.CompareTag("Deep Water")) { inwater = true; }
+        if (collision.CompareTag("Water")) { inwater = true; }
+        if (collision.CompareTag("Deep Water")) { inwater = true; }
     }
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.CompareTag("Water") || collision.CompareTag("Deep Water")) { inwater = false; bobber.gravityScale = 1; }
+        if (collision.CompareTag("Water")) { inwater = false; bobber.gravityScale = 1; }
+        if (collision.CompareTag("Deep Water")) { inwater = false; bobber.gravityScale = 1; }
     }
 }
